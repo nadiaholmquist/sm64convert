@@ -33,11 +33,11 @@ bool validate_save(struct SaveBuffer* save) {
 
 		s32 sum = checksum((u8*) data, sizeof(struct MainMenuSaveData));
 		if (!(data->signature.chksum == sum || data->signature.chksum == bswap16(sum))) {
-			fprintf(stderr, "Main menu block %d is invalid: Bad checksum\n", i);
+			fprintf(stderr, "Main menu block %ld is invalid: Bad checksum\n", i);
 			valid = false;
 		}
 		if (!(magic == MENU_DATA_MAGIC || magic == bswap16(MENU_DATA_MAGIC))) {
-			fprintf(stderr, "Main menu block %d is invalid: Bad magic\n", i);
+			fprintf(stderr, "Main menu block %ld is invalid: Bad magic\n", i);
 			valid = false;
 		}
 	}
@@ -49,11 +49,11 @@ bool validate_save(struct SaveBuffer* save) {
 			u16 magic = file->signature.magic;
 
 			if (!(file->signature.chksum == sum || file->signature.chksum == bswap16(sum))) {
-				fprintf(stderr, "%s save file %d is invalid.\n", j == 0 ? "Main" : "Backup", i + 1);
+				fprintf(stderr, "%s save file %ld is invalid.\n", j == 0 ? "Main" : "Backup", i + 1);
 				valid = false;
 			}
 			if (!(magic == SAVE_FILE_MAGIC || magic == bswap16(SAVE_FILE_MAGIC))) {
-				fprintf(stderr, "Main menu block %d is invalid: Bad magic\n", i);
+				fprintf(stderr, "Main menu block %ld is invalid: Bad magic\n", i);
 				valid = false;
 			}
 		}
@@ -115,7 +115,11 @@ int main(int argc, char** argv) {
 		return 1;
 	}
 
-	little_endian = save.menuData[0].signature.magic == MENU_DATA_MAGIC;
+	u16 endian_test = 0x0100;
+	u8 host_endian = *((u8*) &endian_test);
+
+	little_endian = (save.menuData[0].signature.magic == MENU_DATA_MAGIC) ^ host_endian;
+
 	printf("Input file endianness: %s endian\n", little_endian ? "little" : "big");
 
 	for (int i = 0; i < 2; i++) {
